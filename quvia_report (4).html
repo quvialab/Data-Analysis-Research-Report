@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>데이터 분석 탐구보고서 · QUVIA LAB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #1C3D6E;
+  --navy-mid: #2E5FA3;
+  --navy-light: #D6E4F7;
+  --navy-pale: #EEF4FC;
+  --teal: #0E7E72;
+  --teal-light: #D0F0EB;
+  --amber: #B45309;
+  --amber-light: #FEF3C7;
+  --red-soft: #FEE2E2;
+  --red-text: #B91C1C;
+  --green-soft: #DCFCE7;
+  --green-text: #166534;
+  --gray-100: #F8F9FA;
+  --gray-200: #E9ECEF;
+  --gray-300: #DEE2E6;
+  --gray-500: #6C757D;
+  --gray-700: #495057;
+  --gray-900: #212529;
+  --border: #CBD5E1;
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: #F0F4F8;
+  color: var(--gray-900);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ── 툴바 ── */
+.toolbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 54px;
+  background: var(--navy);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 1000;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+.toolbar-brand {
+  display: flex; align-items: center; gap: 10px;
+}
+.toolbar-logo {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, #4A9EFF, #0E7E72);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px; font-weight: 500; color: #fff;
+}
+.toolbar-title {
+  font-size: 14px; font-weight: 500;
+  color: rgba(255,255,255,0.9);
+}
+.toolbar-actions { display: flex; gap: 8px; }
+.btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; border: none;
+  transition: all 0.15s;
+}
+.btn-outline {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+.btn-outline:hover { background: rgba(255,255,255,0.2); }
+.btn-example {
+  background: rgba(255,200,50,0.15);
+  color: #FFD166;
+  border: 1px solid rgba(255,200,50,0.3);
+}
+.btn-example:hover { background: rgba(255,200,50,0.25); }
+.btn-primary {
+  background: #fff; color: var(--navy);
+}
+.btn-primary:hover { background: var(--navy-light); }
+
+/* ── 예시 패널 ── */
+.example-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  pointer-events: none;
+}
+.example-overlay.open { display: block; pointer-events: auto; }
+.example-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.3);
+}
+.example-panel {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 360px;
+  background: #fff;
+  box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ex-header {
+  background: var(--navy);
+  padding: 16px 18px 14px;
+  flex-shrink: 0;
+}
+.ex-header-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 4px;
+}
+.ex-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+}
+.ex-close {
+  width: 24px; height: 24px;
+  background: rgba(255,255,255,0.1);
+  border: none; border-radius: 50%;
+  color: #fff; font-size: 14px;
+  cursor: pointer; display: flex;
+  align-items: center; justify-content: center;
+}
+.ex-close:hover { background: rgba(255,255,255,0.2); }
+.ex-title {
+  font-size: 15px; font-weight: 700; color: #fff;
+}
+.ex-subtitle {
+  font-size: 12px; color: rgba(255,255,255,0.55);
+}
+.ex-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 18px;
+}
+.ex-section {
+  margin-bottom: 16px;
+  break-inside: avoid;
+}
+.ex-section-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 8px;
+  padding-bottom: 5px;
+  border-bottom: 1.5px solid var(--navy-light);
+}
+.ex-num {
+  width: 20px; height: 20px;
+  background: var(--navy);
+  color: #fff; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; flex-shrink: 0;
+}
+.ex-field { margin-bottom: 10px; }
+.ex-field-label {
+  font-size: 10px; font-weight: 700;
+  color: var(--navy-mid);
+  letter-spacing: 0.3px;
+  margin-bottom: 3px;
+}
+.ex-field-value {
+  font-size: 12px; color: var(--gray-900);
+  line-height: 1.65;
+  background: var(--gray-100);
+  border-radius: 6px;
+  padding: 8px 10px;
+  border-left: 3px solid var(--navy-light);
+}
+.ex-tag {
+  display: inline-block;
+  font-size: 10px; font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin: 2px 2px 0 0;
+}
+.ex-tag-green { background: var(--green-soft); color: var(--green-text); }
+.ex-tag-blue { background: #DBEAFE; color: #1D4ED8; }
+.ex-tag-amber { background: var(--amber-light); color: var(--amber); }
+.ex-highlight {
+  background: #FFF7ED;
+  border: 1px solid #FED7AA;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: #92400E;
+  line-height: 1.6;
+  margin-top: 4px;
+}
+.ex-graph-img {
+  width: 100%;
+  background: linear-gradient(135deg, #EEF4FC 0%, #D0F0EB 100%);
+  border-radius: 8px;
+  height: 120px;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px; color: var(--navy-mid);
+  margin-top: 4px;
+}
+.ex-graph-bar {
+  display: flex; align-items: flex-end; gap: 4px;
+  height: 60px;
+}
+.ex-bar {
+  width: 22px; border-radius: 3px 3px 0 0;
+  background: var(--navy-mid);
+  opacity: 0.7;
+}
+.ex-verdict {
+  display: flex; gap: 6px; margin-top: 4px;
+}
+.ex-verdict-item {
+  flex: 1; padding: 6px 4px;
+  text-align: center; border-radius: 6px;
+  font-size: 11px; font-weight: 500;
+  border: 1.5px solid var(--gray-300);
+  color: var(--gray-500);
+}
+.ex-verdict-item.active {
+  background: var(--amber-light);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.ex-stars { font-size: 16px; color: #F59E0B; letter-spacing: 2px; }
+
+/* ── 메인 레이아웃 ── */
+.page-wrap {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 74px 20px 60px;
+}
+
+/* ── 보고서 ── */
+.report {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+/* ── 헤더 ── */
+.report-header {
+  background: var(--navy);
+  padding: 26px 30px 22px;
+  position: relative; overflow: hidden;
+}
+.report-header::before {
+  content: '';
+  position: absolute; top: -30px; right: -30px;
+  width: 160px; height: 160px; border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+}
+.header-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 2px;
+  color: rgba(255,255,255,0.45);
+  text-transform: uppercase; margin-bottom: 5px;
+}
+.header-title {
+  font-size: 21px; font-weight: 700; color: #fff; margin-bottom: 3px;
+}
+.header-sub {
+  font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 18px;
+}
+.meta-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.meta-item {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius); padding: 9px 13px;
+}
+.meta-item-label {
+  font-size: 10px; letter-spacing: 0.5px;
+  color: rgba(255,255,255,0.4); margin-bottom: 4px;
+}
+.meta-input {
+  width: 100%; background: transparent; border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.22);
+  color: #fff;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; padding: 2px 0 4px; outline: none;
+}
+.meta-input::placeholder { color: rgba(255,255,255,0.28); }
+.meta-input:focus { border-bottom-color: rgba(255,255,255,0.55); }
+
+/* ── 보고서 본문 ── */
+.report-body { padding: 22px 28px 28px; }
+
+/* ── 섹션 헤더 (독립 블록) ── */
+.section-header {
+  display: flex; align-items: center; gap: 0;
+  margin-bottom: 0;
+  padding: 11px 16px;
+  background: var(--navy-pale);
+  border-radius: var(--radius) var(--radius) 0 0;
+  border: 1px solid var(--navy-light);
+  border-bottom: none;
+  margin-top: 28px;
+}
+.section-header:first-child { margin-top: 0; }
+/* 03·04번 섹션은 더 넉넉한 상단 간격 */
+.section-header.wide-top { margin-top: 36px; }
+.section-num {
+  width: 24px; height: 24px;
+  background: var(--navy); color: #fff; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; font-weight: 500;
+  flex-shrink: 0; margin-right: 9px;
+}
+.section-title {
+  font-size: 14px; font-weight: 700; color: var(--navy); flex: 1;
+}
+.section-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; font-weight: 500;
+  background: var(--navy-light); color: var(--navy-mid);
+  padding: 2px 9px; border-radius: 20px;
+}
+
+/* ── 필드 블록 (각각 독립, 연결선으로 이어짐) ── */
+.field-block {
+  border: 1px solid var(--gray-200);
+  border-top: none;
+  padding: 16px 18px;
+}
+.field-block:last-child {
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+.field-block + .field-block {
+  border-top: 1px dashed var(--gray-200);
+}
+/* 03·04번 필드는 패딩 더 넉넉하게 */
+.field-block.spacious {
+  padding: 20px 18px;
+}
+
+.field-label {
+  font-size: 11px; font-weight: 700;
+  color: var(--navy-mid);
+  letter-spacing: 0.3px;
+  margin-bottom: 7px;
+  display: flex; align-items: center; gap: 5px;
+}
+.field-label .icon { font-size: 13px; }
+
+.input-line {
+  width: 100%; border: none;
+  border-bottom: 1.5px solid var(--gray-300);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; color: var(--gray-900);
+  padding: 3px 2px 6px; outline: none;
+  background: transparent;
+  transition: border-color 0.15s;
+}
+.input-line:focus { border-bottom-color: var(--navy-mid); }
+.input-line::placeholder { color: var(--gray-500); font-size: 12px; }
+
+.input-box {
+  width: 100%;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; color: var(--gray-900);
+  padding: 9px 11px; outline: none;
+  background: var(--gray-100);
+  resize: vertical; min-height: 72px;
+  line-height: 1.7; transition: border-color 0.15s, background 0.15s;
+}
+.input-box:focus { border-color: var(--navy-mid); background: #fff; }
+.input-box::placeholder { color: var(--gray-500); }
+
+/* ── 힌트 ── */
+.hint-box {
+  background: var(--navy-pale);
+  border-left: 3px solid var(--navy-mid);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 7px 11px;
+  font-size: 12px; color: var(--navy);
+  line-height: 1.6; margin-bottom: 7px;
+}
+.hint-box strong { font-weight: 700; }
+
+/* ── 태그 ── */
+.tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.tag {
+  font-size: 11px; font-weight: 500;
+  padding: 3px 10px; border-radius: 20px;
+  cursor: pointer; border: 1.5px solid transparent;
+  transition: all 0.12s; user-select: none;
+}
+.tag-blue { background: #DBEAFE; color: #1D4ED8; border-color: #BFDBFE; }
+.tag-green { background: var(--green-soft); color: var(--green-text); border-color: #BBF7D0; }
+.tag-amber { background: var(--amber-light); color: var(--amber); border-color: #FDE68A; }
+.tag.selected { border-color: currentColor; box-shadow: 0 0 0 2px currentColor; }
+
+/* ── 그래프 타입 ── */
+.graph-types { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+.graph-type {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 11px;
+  border: 1.5px solid var(--gray-300); border-radius: 20px;
+  font-size: 12px; font-weight: 500; color: var(--gray-700);
+  cursor: pointer; transition: all 0.12s; user-select: none;
+}
+.graph-type:hover { border-color: var(--navy-mid); color: var(--navy); }
+.graph-type.selected { background: var(--navy); border-color: var(--navy); color: #fff; }
+.graph-type .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: 0.7; }
+
+/* ── 그래프 삽입 ── */
+.graph-drop {
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--radius);
+  min-height: 140px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 7px; color: var(--gray-500); font-size: 13px;
+  cursor: pointer; transition: all 0.15s;
+  position: relative; overflow: hidden;
+}
+.graph-drop:hover { border-color: var(--navy-mid); color: var(--navy); }
+.graph-drop img {
+  max-width: 100%; max-height: 280px;
+  border-radius: 4px; display: block; margin: 12px auto;
+}
+
+/* ── 가설 검증 ── */
+.verdict-row {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 7px;
+}
+.verdict-btn {
+  padding: 9px 6px;
+  border: 2px solid var(--gray-300); border-radius: var(--radius);
+  text-align: center; font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: all 0.12s; user-select: none;
+  color: var(--gray-700); background: var(--gray-100);
+}
+.verdict-btn:hover { border-color: var(--gray-500); }
+.verdict-btn.v-match.selected { background: var(--green-soft); border-color: var(--green-text); color: var(--green-text); }
+.verdict-btn.v-partial.selected { background: var(--amber-light); border-color: var(--amber); color: var(--amber); }
+.verdict-btn.v-miss.selected { background: var(--red-soft); border-color: var(--red-text); color: var(--red-text); }
+
+/* ── 별점 ── */
+.star-row { display: flex; align-items: center; gap: 3px; }
+.star {
+  width: 26px; height: 26px; cursor: pointer;
+  color: var(--gray-300); font-size: 22px;
+  transition: color 0.1s, transform 0.1s; line-height: 1;
+}
+.star:hover, .star.filled { color: #F59E0B; }
+.star:hover { transform: scale(1.15); }
+.star-label { font-size: 12px; color: var(--gray-500); margin-left: 6px; }
+
+/* ── 제언 박스 ── */
+.designer-bg {
+  background: var(--teal-light);
+  border-radius: var(--radius); padding: 11px 13px; margin-bottom: 2px;
+}
+.designer-label {
+  font-size: 11px; font-weight: 700;
+  color: var(--teal); margin-bottom: 5px;
+}
+
+/* ── 푸터 ── */
+.report-footer {
+  border-top: 1px solid var(--gray-200);
+  padding: 11px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.footer-left {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 1px;
+  color: var(--gray-500); text-transform: uppercase;
+}
+.footer-right { font-size: 11px; color: var(--gray-500); }
+.steps-mini { display: flex; gap: 4px; }
+.step-dot { width: 20px; height: 4px; border-radius: 3px; background: var(--navy); }
+
+/* ── 인쇄 ── */
+@media print {
+  body { background: #fff; font-size: 12px; }
+  .toolbar, .example-overlay { display: none !important; }
+  .page-wrap { padding: 0; max-width: 100%; }
+  .report { box-shadow: none; border-radius: 0; }
+
+  /* 06번은 항상 새 페이지에서 시작 */
+  .section-page-break { break-before: page !important; margin-top: 0 !important; }
+  /* 섹션 헤더: 바로 다음 요소와 항상 같은 페이지 */
+  .section-header { break-after: avoid; break-inside: avoid; margin-top: 16px; }
+  .section-header.wide-top { margin-top: 20px; }
+  /* 헤더 바로 다음 첫 field-block은 헤더와 함께 다음 페이지로 이동 */
+  .section-header + .field-block { break-before: avoid; }
+  .field-block { break-inside: avoid; }
+  .field-block.spacious { padding: 16px 18px; }
+  .graph-drop { min-height: 100px; }
+  .report-footer { display: none; }
+  .designer-bg { background: #E6FAF7 !important; }
+  .hint-box { background: #EEF4FC !important; }
+  @page { size: A4; margin: 14mm 14mm 14mm 14mm; }
+}
+</style>
+</head>
+<body>
+
+<!-- 툴바 -->
+<div class="toolbar">
+  <div class="toolbar-brand">
+    <div class="toolbar-logo">Q</div>
+    <span class="toolbar-title">데이터 분석 탐구보고서</span>
+  </div>
+  <div class="toolbar-actions">
+    <button class="btn btn-example" onclick="toggleExample()">
+      📋 예시 보기
+    </button>
+    <button class="btn btn-outline" onclick="window.print()">
+      🖨️ 프린트
+    </button>
+    <button class="btn btn-primary" onclick="savePDF()">
+      📄 PDF 저장
+    </button>
+  </div>
+</div>
+
+<!-- ──────────────────────────────────────── -->
+<!--  예시 패널 (피자 vs 치킨)               -->
+<!-- ──────────────────────────────────────── -->
+<div class="example-overlay" id="exampleOverlay">
+  <div class="example-backdrop" onclick="toggleExample()"></div>
+  <div class="example-panel">
+    <div class="ex-header">
+      <div class="ex-header-top">
+        <div class="ex-label">예시 보고서 · QUVIA LAB</div>
+        <button class="ex-close" onclick="toggleExample()">✕</button>
+      </div>
+      <div class="ex-title">🍕 피자 vs 치킨, 사람들의 선택은?</div>
+      <div class="ex-subtitle">네이버 트렌드 데이터로 검색량 분석하기</div>
+    </div>
+    <div class="ex-body">
+
+      <!-- 기본 정보 -->
+      <div class="ex-section">
+        <div class="ex-field">
+          <div class="ex-field-label">학년 / 반 / 이름</div>
+          <div class="ex-field-value">2학년 3반 &nbsp;홍길동 (팀원: 김민지, 이준혁)</div>
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">탐구 기간 &nbsp;/&nbsp; 사용 도구</div>
+          <div class="ex-field-value">2026년 5월 12일 ~ 5월 23일 &nbsp;/&nbsp; Python · Matplotlib · CSV</div>
+        </div>
+      </div>
+
+      <!-- 01 -->
+      <div class="ex-section">
+        <div class="ex-section-title">
+          <div class="ex-num">01</div>
+          탐구 주제 &amp; 동기
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">💡 탐구 주제</div>
+          <div class="ex-field-value">피자 vs 치킨 — 네이버 검색 트렌드 데이터로 보는 대한민국의 배달음식 선택</div>
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">❓ 탐구 동기</div>
+          <div class="ex-field-value">
+            급식 시간에 친구들끼리 "치킨이 더 맛있어", "피자가 더 맛있어"로 항상 의견이 갈렸다. 단순히 취향이 다른 건지, 아니면 실제로 더 많은 사람들이 선호하는 음식이 따로 있는지 궁금해졌다. 그냥 "내 생각엔 치킨이 더 많이 팔릴 것 같아"라고 말하는 것보다 실제 데이터로 확인하면 훨씬 설득력 있을 것 같아서 이 주제를 선택했다. 또 계절이나 시기에 따라 선호도가 달라지는지도 함께 알아보고 싶었다.
+          </div>
+        </div>
+      </div>
+
+      <!-- 02 -->
+      <div class="ex-section">
+        <div class="ex-section-title">
+          <div class="ex-num">02</div>
+          문제 정의 &amp; 가설 설정
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">🔍 해결하고 싶은 질문</div>
+          <div class="ex-field-value">
+            ① 1년 전체에서 피자와 치킨 중 어느 쪽 검색량이 더 높을까?<br>
+            ② 계절(여름/겨울)에 따라 검색 패턴이 달라질까?<br>
+            ③ 특정 이벤트(치킨 가격 인상 논란 등)가 검색량에 영향을 줄까?
+          </div>
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">🧪 나의 가설</div>
+          <div class="ex-field-value">
+            "치킨의 연평균 검색량이 피자보다 20% 이상 높을 것이다. 단, 겨울(12~2월)에는 피자 검색량이 상대적으로 올라갈 것이다 — 치킨집 배달이 날씨 영향을 더 크게 받기 때문이다."
+          </div>
+        </div>
+        <div class="ex-highlight">
+          💬 <strong>선생님 코멘트:</strong> "20% 이상"처럼 구체적인 수치를 가설에 넣으면 나중에 검증이 훨씬 명확해져요!
+        </div>
+      </div>
+
+      <!-- 03 -->
+      <div class="ex-section">
+        <div class="ex-section-title">
+          <div class="ex-num">03</div>
+          데이터 수집 &amp; 가공
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">🗂️ 데이터 출처</div>
+          <div>
+            <span class="ex-tag ex-tag-green">✅ 네이버 데이터랩 (datalab.naver.com)</span>
+            <span class="ex-tag ex-tag-amber">📁 선생님 제공 CSV</span>
+          </div>
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">📊 수집한 데이터 항목</div>
+          <div class="ex-field-value">
+            · 기간: 2025년 1월 ~ 2025년 12월 (월별 데이터)<br>
+            · 변수: 날짜(월), 피자 검색량 지수(0~100), 치킨 검색량 지수(0~100)<br>
+            · 행 수: 12행 (월별 1개씩)
+          </div>
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">✂️ 데이터 정제 과정</div>
+          <div class="ex-field-value">
+            ① CSV 파일에서 필요 없는 "카테고리" 열 삭제<br>
+            ② 날짜 형식을 "2025-01" 형태로 통일<br>
+            ③ 소수점 이하 값을 정수로 반올림 처리<br>
+            ④ 결측치(빈 값) 없음 확인 완료
+          </div>
+        </div>
+      </div>
+
+      <!-- 04 시각화 -->
+      <div class="ex-section">
+        <div class="ex-section-title">
+          <div class="ex-num" style="font-size:9px">4-1</div>
+          데이터 시각화
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">📈 사용한 그래프</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">
+            <span class="ex-tag ex-tag-blue">꺾은선그래프 plot()</span>
+            <span class="ex-tag ex-tag-blue">막대그래프 bar()</span>
+          </div>
+          <div class="ex-field-value">
+            월별 추이를 보기 위해 꺾은선그래프를, 평균 비교를 위해 막대그래프를 함께 사용함.
+          </div>
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">🖼️ 그래프 ① — 꺾은선그래프 (월별 검색량 추이)</div>
+          <div style="background:linear-gradient(160deg,#EEF4FC,#E1F5EE);border-radius:8px;padding:12px 10px 8px;border:1px solid #CBD5E1">
+            <!-- SVG 꺾은선 그래프 -->
+            <svg viewBox="0 0 300 100" style="width:100%;display:block" xmlns="http://www.w3.org/2000/svg">
+              <!-- 격자선 -->
+              <line x1="20" y1="10" x2="20" y2="78" stroke="#CBD5E1" stroke-width="0.5"/>
+              <line x1="20" y1="78" x2="295" y2="78" stroke="#CBD5E1" stroke-width="0.5"/>
+              <line x1="20" y1="10" x2="295" y2="10" stroke="#E9ECEF" stroke-width="0.5" stroke-dasharray="2,2"/>
+              <line x1="20" y1="35" x2="295" y2="35" stroke="#E9ECEF" stroke-width="0.5" stroke-dasharray="2,2"/>
+              <line x1="20" y1="60" x2="295" y2="60" stroke="#E9ECEF" stroke-width="0.5" stroke-dasharray="2,2"/>
+              <!-- Y축 라벨 -->
+              <text x="17" y="13" text-anchor="end" font-size="5" fill="#888">60</text>
+              <text x="17" y="38" text-anchor="end" font-size="5" fill="#888">40</text>
+              <text x="17" y="63" text-anchor="end" font-size="5" fill="#888">20</text>
+              <!-- 치킨 꺾은선 (검색지수: 42,38,35,50,55,48,60,56,44,48,52,58 → y=78-val*1.1) -->
+              <polyline points="
+                22,31.8 44,36.2 66,39.5 88,23 110,17.5 132,25.2 154,12 176,16.4 198,29.6 220,25.2 242,21 264,14.2
+              " fill="none" stroke="#E53E3E" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+              <!-- 치킨 점 -->
+              <circle cx="22" cy="31.8" r="2.2" fill="#E53E3E"/>
+              <circle cx="44" cy="36.2" r="2.2" fill="#E53E3E"/>
+              <circle cx="66" cy="39.5" r="2.2" fill="#E53E3E"/>
+              <circle cx="88" cy="23" r="2.2" fill="#E53E3E"/>
+              <circle cx="110" cy="17.5" r="2.2" fill="#E53E3E"/>
+              <circle cx="132" cy="25.2" r="2.2" fill="#E53E3E"/>
+              <circle cx="154" cy="12" r="2.2" fill="#E53E3E"/>
+              <circle cx="176" cy="16.4" r="2.2" fill="#E53E3E"/>
+              <circle cx="198" cy="29.6" r="2.2" fill="#E53E3E"/>
+              <circle cx="220" cy="25.2" r="2.2" fill="#E53E3E"/>
+              <circle cx="242" cy="21" r="2.2" fill="#E53E3E"/>
+              <circle cx="264" cy="14.2" r="2.2" fill="#E53E3E"/>
+              <!-- 피자 꺾은선 (검색지수: 30,28,25,32,30,35,38,36,31,29,34,40 → y=78-val*1.1) -->
+              <polyline points="
+                22,45 44,47.2 66,50.5 88,43 110,45 132,39.5 154,36.2 176,38.4 198,44 220,46.1 242,40.6 264,34
+              " fill="none" stroke="#3B82F6" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+              <!-- 피자 점 -->
+              <circle cx="22" cy="45" r="2.2" fill="#3B82F6"/>
+              <circle cx="44" cy="47.2" r="2.2" fill="#3B82F6"/>
+              <circle cx="66" cy="50.5" r="2.2" fill="#3B82F6"/>
+              <circle cx="88" cy="43" r="2.2" fill="#3B82F6"/>
+              <circle cx="110" cy="45" r="2.2" fill="#3B82F6"/>
+              <circle cx="132" cy="39.5" r="2.2" fill="#3B82F6"/>
+              <circle cx="154" cy="36.2" r="2.2" fill="#3B82F6"/>
+              <circle cx="176" cy="38.4" r="2.2" fill="#3B82F6"/>
+              <circle cx="198" cy="44" r="2.2" fill="#3B82F6"/>
+              <circle cx="220" cy="46.1" r="2.2" fill="#3B82F6"/>
+              <circle cx="242" cy="40.6" r="2.2" fill="#3B82F6"/>
+              <circle cx="264" cy="34" r="2.2" fill="#3B82F6"/>
+              <!-- X축 월 라벨 -->
+              <text x="22" y="86" text-anchor="middle" font-size="5" fill="#888">1월</text>
+              <text x="66" y="86" text-anchor="middle" font-size="5" fill="#888">3월</text>
+              <text x="110" y="86" text-anchor="middle" font-size="5" fill="#888">5월</text>
+              <text x="154" y="86" text-anchor="middle" font-size="5" fill="#888">7월</text>
+              <text x="198" y="86" text-anchor="middle" font-size="5" fill="#888">9월</text>
+              <text x="242" y="86" text-anchor="middle" font-size="5" fill="#888">11월</text>
+              <text x="264" y="86" text-anchor="middle" font-size="5" fill="#888">12월</text>
+              <!-- 범례 -->
+              <rect x="22" y="92" width="7" height="4" rx="1" fill="#E53E3E"/>
+              <text x="31" y="96" font-size="5.5" fill="#444">치킨</text>
+              <rect x="60" y="92" width="7" height="4" rx="1" fill="#3B82F6"/>
+              <text x="69" y="96" font-size="5.5" fill="#444">피자</text>
+              <text x="120" y="96" font-size="5" fill="#888">2025년 1월 → 12월</text>
+            </svg>
+          </div>
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">🖼️ 그래프 ② — 막대그래프 (연평균 검색량 비교)</div>
+          <div style="background:linear-gradient(160deg,#EEF4FC,#E1F5EE);border-radius:8px;padding:12px 10px 8px;border:1px solid #CBD5E1">
+            <svg viewBox="0 0 300 100" style="width:100%;display:block" xmlns="http://www.w3.org/2000/svg">
+              <!-- 격자선 -->
+              <line x1="40" y1="10" x2="40" y2="78" stroke="#CBD5E1" stroke-width="0.5"/>
+              <line x1="40" y1="78" x2="260" y2="78" stroke="#CBD5E1" stroke-width="0.5"/>
+              <line x1="40" y1="20" x2="260" y2="20" stroke="#E9ECEF" stroke-width="0.5" stroke-dasharray="2,2"/>
+              <line x1="40" y1="40" x2="260" y2="40" stroke="#E9ECEF" stroke-width="0.5" stroke-dasharray="2,2"/>
+              <line x1="40" y1="60" x2="260" y2="60" stroke="#E9ECEF" stroke-width="0.5" stroke-dasharray="2,2"/>
+              <!-- Y축 라벨 -->
+              <text x="37" y="23" text-anchor="end" font-size="5" fill="#888">60</text>
+              <text x="37" y="43" text-anchor="end" font-size="5" fill="#888">40</text>
+              <text x="37" y="63" text-anchor="end" font-size="5" fill="#888">20</text>
+              <!-- 치킨 막대 (49.2 → 높이=49.2*1.1=54.1, y=78-54.1=23.9) -->
+              <rect x="80" y="23.9" width="55" height="54.1" rx="2" fill="#E53E3E" opacity="0.85"/>
+              <text x="107" y="19.5" text-anchor="middle" font-size="6" fill="#E53E3E" font-weight="bold">49.2</text>
+              <!-- 피자 막대 (32.3 → 높이=32.3*1.1=35.5, y=78-35.5=42.5) -->
+              <rect x="165" y="42.5" width="55" height="35.5" rx="2" fill="#3B82F6" opacity="0.85"/>
+              <text x="192" y="38" text-anchor="middle" font-size="6" fill="#3B82F6" font-weight="bold">32.3</text>
+              <!-- X축 라벨 -->
+              <text x="107" y="88" text-anchor="middle" font-size="6.5" fill="#444" font-weight="500">치킨</text>
+              <text x="192" y="88" text-anchor="middle" font-size="6.5" fill="#444" font-weight="500">피자</text>
+              <!-- 범례 -->
+              <text x="150" y="98" text-anchor="middle" font-size="5" fill="#888">연평균 검색 지수 비교 (2025)</text>
+              <!-- 차이 표시 -->
+              <line x1="107" y1="16" x2="192" y2="16" stroke="#999" stroke-width="0.8" stroke-dasharray="2,2"/>
+              <text x="150" y="14" text-anchor="middle" font-size="5" fill="#666">약 52% 차이</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4-2 해석 -->
+      <div class="ex-section">
+        <div class="ex-section-title">
+          <div class="ex-num" style="font-size:9px">4-2</div>
+          데이터 해석
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">👁️ 데이터 해석</div>
+          <div class="ex-field-value">
+            ① 치킨의 연평균 검색 지수는 49.2, 피자는 32.3으로 치킨이 약 52% 높게 나타났다.<br>
+            ② 치킨 검색량은 7월(60)과 12월(58)에 정점을 찍었다 — 여름 야외활동과 연말 모임 영향으로 보인다.<br>
+            ③ 피자는 12월(40)에 가장 높았지만, 예상과 달리 겨울에만 피자가 두드러지게 높지는 않았다.<br>
+            ④ 3~4월에 두 음식 모두 검색량이 떨어지는 패턴이 발견되었다.
+          </div>
+        </div>
+      </div>
+
+      <!-- 05 결론 -->
+      <div class="ex-section">
+        <div class="ex-section-title">
+          <div class="ex-num">05</div>
+          결론 &amp; 가설 검증
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">✅ 가설 검증 결과</div>
+          <div class="ex-verdict">
+            <div class="ex-verdict-item">✓ 맞음</div>
+            <div class="ex-verdict-item active">△ 부분적으로 맞음</div>
+            <div class="ex-verdict-item">✗ 틀림</div>
+          </div>
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">📝 한 줄 결론</div>
+          <div class="ex-field-value">
+            치킨이 연중 내내 피자보다 검색량이 높았으며, 특히 여름과 연말에 차이가 더 크게 벌어졌다.
+          </div>
+        </div>
+        <div class="ex-highlight">
+          ⚠️ <strong>검증 이유:</strong> 치킨이 더 높다는 방향은 맞았지만(52% > 20%), "겨울에 피자가 상대적으로 올라간다"는 부분은 뚜렷하지 않았어서 "부분적으로 맞음"으로 판정했다.
+        </div>
+      </div>
+
+      <!-- 06 제언 -->
+      <div class="ex-section">
+        <div class="ex-section-title">
+          <div class="ex-num">06</div>
+          제언 &amp; 성찰
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">🌿 나의 제언</div>
+          <div class="ex-field-value">
+            7월과 12월에 치킨 검색량이 급증하는 점을 보면, 치킨 프랜차이즈는 이 시기에 집중적으로 마케팅·할인 행사를 진행하면 효과적일 것이다. 피자 업체는 봄(3~4월) 비수기에 신메뉴 출시나 가격 혜택으로 검색량을 끌어올리는 전략을 고려해볼 수 있다.
+          </div>
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">😊 성장한 점</div>
+          <div class="ex-field-value">
+            그래프를 그리고 나서 숫자가 "이야기"를 한다는 게 실감났다. matplotlib의 legend(), xlabel(), ylabel()을 직접 써보면서 그래프 꾸미는 법도 익혔다.
+          </div>
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">⚠️ 한계 / 아쉬운 점</div>
+          <div class="ex-field-value">
+            네이버 검색량 지수는 실제 주문 건수가 아니라 "관심도"를 반영하기 때문에 실제 매출과 다를 수 있다. 배달앱(배달의민족·쿠팡이츠) 실주문 데이터도 함께 분석했다면 더 설득력 있었을 것이다.
+          </div>
+        </div>
+        <div class="ex-field">
+          <div class="ex-field-label">⭐ 자기 평가</div>
+          <div class="ex-stars">★★★★☆</div>
+          <div style="font-size:11px;color:var(--gray-500);margin-top:3px">4점 — 가설 검증까지 잘 했지만, 그래프를 더 보기 좋게 꾸미지 못한 게 아쉬움</div>
+        </div>
+      </div>
+
+    </div><!-- /ex-body -->
+  </div><!-- /example-panel -->
+</div><!-- /example-overlay -->
+
+
+<!-- ──────────────────────────────────────── -->
+<!--  메인 보고서                            -->
+<!-- ──────────────────────────────────────── -->
+<div class="page-wrap">
+<div class="report">
+
+  <!-- 헤더 -->
+  <div class="report-header">
+    <div class="header-label">QUVIA LAB · DATA SCIENCE INQUIRY REPORT</div>
+    <div class="header-title">데이터 분석 탐구보고서</div>
+    <div class="header-sub">인수다시분해 6단계 기반 · Python × Matplotlib × CSV</div>
+    <div class="meta-grid">
+      <div class="meta-item">
+        <div class="meta-item-label">학년 / 반 / 이름</div>
+        <input class="meta-input" type="text" placeholder="예) 2학년 3반 홍길동">
+      </div>
+      <div class="meta-item">
+        <div class="meta-item-label">팀원 (있는 경우)</div>
+        <input class="meta-input" type="text" placeholder="예) 김철수, 이영희">
+      </div>
+      <div class="meta-item">
+        <div class="meta-item-label">탐구 기간</div>
+        <input class="meta-input" type="text" placeholder="예) 2026년 6월 2일 ~ 6월 13일">
+      </div>
+      <div class="meta-item">
+        <div class="meta-item-label">사용 도구</div>
+        <input class="meta-input" type="text" placeholder="예) Python, Matplotlib, CSV">
+      </div>
+    </div>
+  </div>
+
+  <div class="report-body">
+
+  <!-- ── 01 탐구 주제 & 동기 ── -->
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div class="section-title">탐구 주제 &amp; 동기</div>
+    <div class="section-badge">SENSE</div>
+  </div>
+  <div class="field-block">
+    <div class="field-label"><span class="icon">💡</span> 탐구 주제</div>
+    <input class="input-line" type="text"
+      placeholder="예) 우리 반 취침 시간과 수학 점수의 상관관계 분석">
+  </div>
+  <div class="field-block">
+    <div class="field-label"><span class="icon">❓</span> 탐구 동기</div>
+    <div class="hint-box"><strong>작성 팁:</strong> 왜 이 주제를 데이터로 탐구하고 싶었나요? 내가 겪은 불편함, 궁금했던 점에서 출발해 보세요.</div>
+    <textarea class="input-box"
+      placeholder="예) 친구들 중에 늦게 자는데 성적이 좋은 경우도 있고, 일찍 자는데 성적이 낮은 경우도 있어서 실제로 수면 시간이 성적에 영향을 미치는지 데이터로 확인해보고 싶었다." rows="3"></textarea>
+  </div>
+
+  <!-- ── 02 문제 정의 & 가설 ── -->
+  <div class="section-header">
+    <div class="section-num">02</div>
+    <div class="section-title">문제 정의 &amp; 가설 설정</div>
+    <div class="section-badge">SPARK</div>
+  </div>
+  <div class="field-block">
+    <div class="field-label"><span class="icon">🔍</span> 해결하고 싶은 질문</div>
+    <input class="input-line" type="text"
+      placeholder="예) 취침 시간이 늦을수록 수학 점수가 낮아질까?">
+  </div>
+  <div class="field-block">
+    <div class="field-label"><span class="icon">🧪</span> 나의 가설 (데이터를 보기 전에 미리 예측!)</div>
+    <div class="hint-box"><strong>작성 팁:</strong> "A이면 B일 것이다"처럼 구체적인 숫자와 함께 예측해 보세요.</div>
+    <textarea class="input-box"
+      placeholder="예) &quot;자정(24시) 이후에 취침하는 학생은 22시 이전에 취침하는 학생보다 평균 수학 점수가 10점 이상 낮을 것이다.&quot;" rows="3"></textarea>
+  </div>
+
+  <!-- ── 03 데이터 수집 & 가공 ── -->
+  <div class="section-header wide-top">
+    <div class="section-num">03</div>
+    <div class="section-title">데이터 수집 &amp; 가공</div>
+    <div class="section-badge">CUBE</div>
+  </div>
+  <div class="field-block spacious">
+    <div class="field-label"><span class="icon">🗂️</span> 데이터 출처 (해당하는 것 클릭!)</div>
+    <div class="tag-row">
+      <span class="tag tag-green" onclick="toggleTag(this)">✅ 공공데이터포털 data.go.kr</span>
+      <span class="tag tag-green" onclick="toggleTag(this)">✅ 기상자료개방포털 data.kma.go.kr</span>
+      <span class="tag tag-green" onclick="toggleTag(this)">✅ 국가통계포털 kosis.kr</span>
+      <span class="tag tag-green" onclick="toggleTag(this)">✅ 학교알리미 schoolinfo.go.kr</span>
+      <span class="tag tag-blue" onclick="toggleTag(this)">📋 직접 설문 조사</span>
+      <span class="tag tag-blue" onclick="toggleTag(this)">👀 직접 관찰</span>
+      <span class="tag tag-amber" onclick="toggleTag(this)">📁 선생님 제공 CSV</span>
+    </div>
+    <input class="input-line" type="text"
+      placeholder="직접 입력 (기타 출처가 있으면 적어주세요)" style="margin-top:10px">
+  </div>
+  <div class="field-block spacious">
+    <div class="field-label"><span class="icon">📊</span> 수집한 데이터 항목 (변수)</div>
+    <input class="input-line" type="text"
+      placeholder="예) 이름, 취침 시간(시), 수학 점수(0~100점)">
+    <div style="height:18px"></div>
+  </div>
+  <div class="field-block spacious">
+    <div class="field-label"><span class="icon">✂️</span> 데이터 정제 과정</div>
+    <div class="hint-box"><strong>작성 팁:</strong> 필요 없는 데이터를 지우거나, 오류 데이터를 수정한 과정을 적어보세요.</div>
+    <textarea class="input-box"
+      placeholder="예) 취침 시간이 비어있는 행 2개를 제외했다. 점수가 0점인 항목은 결석으로 판단해 분석에서 제외했다." rows="4"></textarea>
+  </div>
+
+  <!-- ── 4-1 데이터 시각화 ── -->
+  <div class="section-header wide-top">
+    <div class="section-num" style="font-size:9px">4-1</div>
+    <div class="section-title">데이터 시각화</div>
+    <div class="section-badge">BUILD</div>
+  </div>
+  <div class="field-block spacious">
+    <div class="field-label"><span class="icon">🖼️</span> 그래프 / 표 삽입 (클릭해서 이미지 업로드)</div>
+    <div class="graph-drop" id="dropZone" onclick="document.getElementById('imgInput').click()">
+      <div style="font-size:30px;opacity:0.35">📊</div>
+      <div>클릭해서 그래프 이미지 업로드</div>
+      <div style="font-size:11px;opacity:0.55">PNG, JPG, GIF 지원</div>
+      <input type="file" id="imgInput" accept="image/*" onchange="handleImage(event)" style="display:none">
+    </div>
+  </div>
+
+  <!-- ── 4-2 데이터 해석 ── -->
+  <div class="section-header" style="margin-top:0;border-radius:0;border-top:1px solid var(--navy-light);">
+    <div class="section-num" style="font-size:9px">4-2</div>
+    <div class="section-title">데이터 해석</div>
+    <div class="section-badge">BUILD</div>
+  </div>
+  <div class="field-block spacious">
+    <div class="field-label"><span class="icon">📈</span> 사용한 그래프 종류 (복수 선택 가능)</div>
+    <div class="graph-types">
+      <div class="graph-type" onclick="selectGraph(this)"><span class="dot"></span>막대그래프 bar()</div>
+      <div class="graph-type" onclick="selectGraph(this)"><span class="dot"></span>꺾은선그래프 plot()</div>
+      <div class="graph-type" onclick="selectGraph(this)"><span class="dot"></span>산점도 scatter()</div>
+      <div class="graph-type" onclick="selectGraph(this)"><span class="dot"></span>원그래프 pie()</div>
+      <div class="graph-type" onclick="selectGraph(this)"><span class="dot"></span>가로막대 barh()</div>
+      <div class="graph-type" onclick="selectGraph(this)"><span class="dot"></span>히스토그램 hist()</div>
+      <div class="graph-type" onclick="selectGraph(this)"><span class="dot"></span>상자그림 boxplot()</div>
+    </div>
+    <div class="field-label" style="margin-top:8px">그래프를 선택한 이유</div>
+    <input class="input-line" type="text"
+      placeholder="예) 두 수치 변수의 상관관계를 보기 위해 산점도를 선택했다.">
+    <div style="height:6px"></div>
+  </div>
+  <div class="field-block spacious">
+    <div class="field-label"><span class="icon">👁️</span> 데이터 해석 (그래프에서 발견한 것)</div>
+    <div class="hint-box"><strong>작성 팁:</strong> 구체적인 숫자를 포함해서 적으면 더 설득력 있어요!</div>
+    <textarea class="input-box"
+      placeholder="예) 산점도를 보니 취침 시간이 24시 이후인 학생들의 평균 점수는 72점, 22시 이전인 학생들은 88점으로 16점 차이가 났다." rows="5"></textarea>
+  </div>
+
+  <!-- ── 05 결론 & 가설 검증 ── -->
+  <div class="section-header wide-top">
+    <div class="section-num">05</div>
+    <div class="section-title">결론 &amp; 가설 검증</div>
+    <div class="section-badge">MASTER</div>
+  </div>
+  <div class="field-block">
+    <div class="field-label"><span class="icon">✅</span> 가설 검증 결과 (클릭해서 선택)</div>
+    <div class="verdict-row">
+      <div class="verdict-btn v-match" onclick="selectVerdict(this)">✓ 가설 맞음</div>
+      <div class="verdict-btn v-partial" onclick="selectVerdict(this)">△ 부분적으로 맞음</div>
+      <div class="verdict-btn v-miss" onclick="selectVerdict(this)">✗ 가설 틀림</div>
+    </div>
+  </div>
+  <div class="field-block">
+    <div class="field-label"><span class="icon">📝</span> 한 줄 결론</div>
+    <input class="input-line" type="text"
+      placeholder="예) 취침 시간이 늦을수록 수학 점수가 낮아지는 경향이 데이터로 확인되었다.">
+  </div>
+
+  <!-- ── 06 제언 & 성찰 ── -->
+  <div class="section-header wide-top section-page-break">
+    <div class="section-num">06</div>
+    <div class="section-title">제언 &amp; 성찰</div>
+    <div class="section-badge">Designer's Note</div>
+  </div>
+  <div class="field-block">
+    <div class="designer-bg">
+      <div class="designer-label">🌿 나의 제언 (데이터를 바탕으로 해결책 제안)</div>
+      <textarea class="input-box"
+        style="background:rgba(255,255,255,0.65);min-height:65px"
+        placeholder="예) 취침 시간이 늦은 학생들을 위해 학교에서 수면 습관 개선 캠페인을 진행하면 좋겠다." rows="3"></textarea>
+    </div>
+  </div>
+  <div class="field-block">
+    <div class="field-label"><span class="icon">😊</span> 탐구를 통해 성장한 점</div>
+    <textarea class="input-box"
+      placeholder="이번 탐구를 통해 배우거나 깨달은 것을 적어보세요." rows="2"></textarea>
+  </div>
+  <div class="field-block">
+    <div class="field-label"><span class="icon">⚠️</span> 데이터의 한계 / 아쉬운 점</div>
+    <textarea class="input-box"
+      placeholder="예) 우리 반 20명의 데이터만 사용해서 전체 학생에게 일반화하기 어렵다." rows="2"></textarea>
+  </div>
+  <div class="field-block">
+    <div class="field-label"><span class="icon">⭐</span> 이번 탐구 자기 평가 (별점)</div>
+    <div class="star-row" id="starRow">
+      <span class="star" onclick="setStar(1)">☆</span>
+      <span class="star" onclick="setStar(2)">☆</span>
+      <span class="star" onclick="setStar(3)">☆</span>
+      <span class="star" onclick="setStar(4)">☆</span>
+      <span class="star" onclick="setStar(5)">☆</span>
+      <span class="star-label" id="starLabel">별점을 선택해주세요</span>
+    </div>
+  </div>
+
+  </div><!-- /report-body -->
+
+  <!-- 푸터 -->
+  <div class="report-footer">
+    <div class="footer-left">QUVIA LAB · 데이터 과학 탐구활동</div>
+    <div class="steps-mini">
+      <div class="step-dot" title="인식"></div>
+      <div class="step-dot" title="수집"></div>
+      <div class="step-dot" title="다듬기"></div>
+      <div class="step-dot" title="시각화"></div>
+      <div class="step-dot" title="분석"></div>
+      <div class="step-dot" title="해결"></div>
+    </div>
+    <div class="footer-right">인수다시분해 6단계</div>
+  </div>
+
+</div><!-- /report -->
+</div><!-- /page-wrap -->
+
+<script>
+function toggleTag(el) { el.classList.toggle('selected'); }
+function selectGraph(el) { el.classList.toggle('selected'); }
+function selectVerdict(el) {
+  document.querySelectorAll('.verdict-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function setStar(val) {
+  const labels = ['','1점 – 많이 부족했어요','2점 – 조금 부족했어요','3점 – 보통이에요','4점 – 잘 했어요!','5점 – 최고예요! ⭐'];
+  document.getElementById('starLabel').textContent = labels[val];
+  document.querySelectorAll('.star').forEach((s,i) => {
+    s.textContent = i < val ? '★' : '☆';
+    s.classList.toggle('filled', i < val);
+  });
+}
+
+function handleImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const zone = document.getElementById('dropZone');
+    zone.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = ev.target.result;
+    img.style.cssText = 'max-width:100%;max-height:280px;border-radius:6px;display:block;margin:12px auto';
+    zone.appendChild(img);
+    const btn = document.createElement('div');
+    btn.textContent = '다른 이미지로 교체';
+    btn.style.cssText = 'font-size:12px;color:#6C757D;margin-bottom:10px;cursor:pointer;text-decoration:underline';
+    btn.onclick = () => { document.getElementById('imgInput').value=''; document.getElementById('imgInput').click(); };
+    zone.appendChild(btn);
+    const inp = document.createElement('input');
+    inp.type='file'; inp.id='imgInput'; inp.accept='image/*'; inp.style.display='none';
+    inp.onchange = handleImage;
+    zone.appendChild(inp);
+    zone.classList.add('has-image');
+  };
+  reader.readAsDataURL(file);
+}
+
+function toggleExample() {
+  document.getElementById('exampleOverlay').classList.toggle('open');
+}
+
+function savePDF() {
+  const msg = document.createElement('div');
+  msg.style.cssText = 'position:fixed;top:66px;right:20px;background:#1C3D6E;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2)';
+  msg.textContent = '인쇄 창에서 "PDF로 저장" 선택 📄';
+  document.body.appendChild(msg);
+  setTimeout(() => { msg.remove(); window.print(); }, 500);
+}
+</script>
+</body>
+</html>
