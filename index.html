@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
   --navy: #1C3D6E;
@@ -31,6 +32,159 @@
   --radius: 8px;
   --radius-lg: 12px;
 }
+
+/* ── 저장 상태 인디케이터 ── */
+.save-indicator {
+  position: fixed; bottom: 20px; right: 20px; z-index: 500;
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(255,255,255,0.95); border: 1px solid var(--gray-200);
+  border-radius: 100px; padding: 7px 16px;
+  font-size: 12px; color: var(--gray-500);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  transition: all 0.3s; opacity: 0; transform: translateY(10px);
+}
+.save-indicator.show { opacity: 1; transform: translateY(0); }
+.save-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gray-300); flex-shrink: 0; }
+.save-indicator.saving .save-dot { background: #F59E0B; animation: savePulse 1s ease infinite; }
+.save-indicator.saved  .save-dot { background: var(--teal); }
+.save-indicator.error  .save-dot { background: var(--red-text); }
+@keyframes savePulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+/* ── 로그인 모달 ── */
+.login-backdrop {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(10,15,30,0.85); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+}
+.login-modal {
+  background: #fff; border-radius: var(--radius-lg);
+  padding: 36px 32px; width: 90%; max-width: 420px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+  animation: loginPop 0.3s ease both;
+}
+@keyframes loginPop { from{opacity:0;transform:scale(0.93) translateY(16px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.login-logo {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 24px;
+}
+.login-logo-badge {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: linear-gradient(135deg,#2E5FA3,#0E7E72);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono',monospace; font-size: 15px; font-weight: 500; color: #fff;
+}
+.login-logo-text { font-size: 16px; font-weight: 700; color: var(--navy); }
+.login-title { font-size: 20px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
+.login-sub   { font-size: 13px; color: var(--gray-500); margin-bottom: 24px; line-height: 1.5; }
+.login-field { margin-bottom: 14px; }
+.login-field label { display: block; font-size: 12px; font-weight: 700; color: var(--navy-mid); margin-bottom: 6px; }
+.login-field input {
+  width: 100%; border: 1px solid var(--gray-300); border-radius: var(--radius);
+  padding: 11px 13px; font-size: 14px; font-family: 'Noto Sans KR',sans-serif;
+  color: var(--gray-900); outline: none; transition: border-color 0.15s;
+  background: var(--gray-100);
+}
+.login-field input:focus { border-color: var(--navy-mid); background: #fff; }
+.login-field input::placeholder { color: var(--gray-500); font-size: 13px; }
+.login-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.login-btn {
+  width: 100%; margin-top: 6px; padding: 13px;
+  background: var(--navy); border: none; border-radius: var(--radius);
+  color: #fff; font-size: 14px; font-weight: 700;
+  font-family: 'Noto Sans KR',sans-serif; cursor: pointer; transition: background 0.15s;
+}
+.login-btn:hover { background: var(--navy-mid); }
+.login-hint { font-size: 11px; color: var(--gray-500); text-align: center; margin-top: 12px; line-height: 1.6; }
+.login-error {
+  background: var(--red-soft); color: var(--red-text); border-radius: var(--radius);
+  padding: 8px 12px; font-size: 12px; margin-bottom: 10px; display: none;
+}
+
+/* ── 유저 뱃지 (툴바) ── */
+.user-badge {
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 100px; padding: 5px 14px 5px 8px;
+  font-size: 12px; color: rgba(255,255,255,0.9); cursor: pointer;
+  transition: background 0.15s;
+}
+.user-badge:hover { background: rgba(255,255,255,0.2); }
+.user-avatar {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: linear-gradient(135deg,#43e6b5,#2E5FA3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.user-badge-logout {
+  font-size: 10px; color: rgba(255,255,255,0.45); margin-left: 2px;
+}
+
+/* ── 내 보고서 목록 패널 ── */
+.mylist-overlay {
+  display: none; position: fixed; inset: 0; z-index: 900; pointer-events: none;
+}
+.mylist-overlay.open { display: block; pointer-events: auto; }
+.mylist-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.35); }
+.mylist-panel {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 340px;
+  background: #fff; box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.ml-header { background: var(--navy); padding: 16px 18px 14px; flex-shrink: 0; }
+.ml-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.ml-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1.5px; color:rgba(255,255,255,0.45); text-transform:uppercase; }
+.ml-close { width:24px;height:24px;background:rgba(255,255,255,0.1);border:none;border-radius:50%;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center; }
+.ml-close:hover { background:rgba(255,255,255,0.2); }
+.ml-title { font-size:15px;font-weight:700;color:#fff; }
+.ml-subtitle { font-size:12px;color:rgba(255,255,255,0.5); }
+.ml-body { flex:1;overflow-y:auto;padding:14px; }
+.ml-item {
+  border:1px solid var(--gray-200); border-radius:var(--radius); padding:12px 14px;
+  margin-bottom:8px; cursor:pointer; transition:all 0.15s; position:relative;
+}
+.ml-item:hover { border-color:var(--navy-mid); background:var(--navy-pale); }
+.ml-item-title { font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px; }
+.ml-item-meta { font-size:11px;color:var(--gray-500); }
+.ml-item-del {
+  position:absolute;top:8px;right:8px;width:22px;height:22px;border:none;
+  border-radius:50%;background:var(--red-soft);color:var(--red-text);
+  font-size:11px;cursor:pointer;display:none;align-items:center;justify-content:center;
+}
+.ml-item:hover .ml-item-del { display:flex; }
+.ml-empty { text-align:center;padding:40px 20px;color:var(--gray-500);font-size:13px;line-height:1.7; }
+.ml-new-btn {
+  margin:0 14px 14px;padding:11px;background:var(--navy);border:none;
+  border-radius:var(--radius);color:#fff;font-size:13px;font-weight:500;
+  font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:background 0.15s;width:calc(100% - 28px);
+}
+.ml-new-btn:hover { background:var(--navy-mid); }
+
+/* ── PDF 불러오기 모달 ── */
+.pdf-backdrop {
+  display:none;position:fixed;inset:0;z-index:1500;
+  background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);
+  align-items:center;justify-content:center;
+}
+.pdf-backdrop.open { display:flex; }
+.pdf-modal {
+  background:#fff;border-radius:var(--radius-lg);padding:28px 26px;
+  width:90%;max-width:440px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.2);
+}
+.pdf-title { font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px; }
+.pdf-sub   { font-size:12px;color:var(--gray-500);margin-bottom:18px;line-height:1.6; }
+.pdf-drop {
+  border:2px dashed var(--gray-300);border-radius:var(--radius);
+  min-height:110px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:6px;
+  color:var(--gray-500);font-size:13px;cursor:pointer;transition:all 0.15s;
+  margin-bottom:14px;
+}
+.pdf-drop:hover { border-color:var(--navy-mid);color:var(--navy); }
+.pdf-progress { display:none;font-size:12px;color:var(--navy-mid);text-align:center;margin-bottom:10px; }
+.pdf-actions { display:flex;gap:8px; }
+.pdf-cancel { flex:1;padding:10px;background:var(--gray-100);border:1px solid var(--gray-300);border-radius:var(--radius);color:var(--gray-500);font-size:13px;cursor:pointer; }
+.pdf-confirm { flex:2;padding:10px;background:var(--navy);border:none;border-radius:var(--radius);color:#fff;font-size:13px;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;display:none; }
+.pdf-confirm:hover { background:var(--navy-mid); }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: 'Noto Sans KR', sans-serif;
@@ -682,18 +836,112 @@ body {
     <span class="toolbar-title">데이터 분석 탐구보고서</span>
   </div>
   <div class="toolbar-actions">
-    <button class="btn btn-topics" onclick="toggleTopics()">
-      📚 주제 목록
-    </button>
-    <button class="btn btn-example" onclick="toggleExample()">
-      📋 예시 보기
-    </button>
-    <button class="btn btn-outline" onclick="window.print()">
-      🖨️ 프린트
-    </button>
-    <button class="btn btn-primary" onclick="savePDF()">
-      📄 PDF 저장
-    </button>
+    <!-- 로그인 상태 뱃지 -->
+    <div class="user-badge" id="userBadge" onclick="openMyList()" style="display:none">
+      <div class="user-avatar" id="userAvatar">?</div>
+      <span id="userBadgeName">학생</span>
+      <span class="user-badge-logout" onclick="logout(event)">로그아웃</span>
+    </div>
+    <button class="btn btn-topics" onclick="toggleTopics()">📚 주제 목록</button>
+    <button class="btn btn-example" onclick="toggleExample()">📋 예시 보기</button>
+    <!-- 저장/불러오기 (로그인 후 표시) -->
+    <button class="btn" id="btnSaveCloud"
+      style="display:none;background:rgba(67,230,181,0.15);color:#0E7E72;border:1px solid rgba(67,230,181,0.3)"
+      onclick="saveToCloud()">💾 저장</button>
+    <button class="btn" id="btnMyReports"
+      style="display:none;background:rgba(46,95,163,0.15);color:#2E5FA3;border:1px solid rgba(46,95,163,0.3)"
+      onclick="openMyList()">📂 내 보고서</button>
+    <button class="btn btn-outline" id="btnLoadPDF" onclick="openPdfModal()">📥 PDF 불러오기</button>
+    <button class="btn btn-outline" onclick="window.print()">🖨️ 프린트</button>
+    <button class="btn btn-primary" onclick="savePDF()">📄 PDF 저장</button>
+  </div>
+</div>
+
+<!-- 저장 상태 인디케이터 -->
+<div class="save-indicator" id="saveIndicator">
+  <span class="save-dot"></span>
+  <span id="saveText">저장됨</span>
+</div>
+
+<!-- ──────────────────────────────────────── -->
+<!--  로그인 모달                           -->
+<!-- ──────────────────────────────────────── -->
+<div class="login-backdrop" id="loginBackdrop">
+  <div class="login-modal">
+    <div class="login-logo">
+      <div class="login-logo-badge">Q</div>
+      <span class="login-logo-text">QUVIA LAB 탐구보고서</span>
+    </div>
+    <div class="login-title">👋 안녕하세요!</div>
+    <div class="login-sub">학년·반·이름과 비밀번호를 입력하면<br>작성 중인 보고서를 어디서든 불러올 수 있어요.</div>
+    <div id="loginError" class="login-error"></div>
+    <div class="login-row">
+      <div class="login-field">
+        <label>학년</label>
+        <input id="lgGrade" type="text" placeholder="예) 2학년" maxlength="10">
+      </div>
+      <div class="login-field">
+        <label>반</label>
+        <input id="lgClass" type="text" placeholder="예) 3반" maxlength="10">
+      </div>
+    </div>
+    <div class="login-field">
+      <label>이름</label>
+      <input id="lgName" type="text" placeholder="예) 홍길동" maxlength="20">
+    </div>
+    <div class="login-field">
+      <label>비밀번호 (4자리 이상, 숫자 권장)</label>
+      <input id="lgPw" type="password" placeholder="예) 생년월일 0101" maxlength="20"
+        onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">시작하기 →</button>
+    <div class="login-hint">
+      처음이면 자동으로 계정이 만들어져요 🎉<br>
+      비밀번호를 기억해두세요 — 나중에 불러올 때 필요해요.
+    </div>
+  </div>
+</div>
+
+<!-- ──────────────────────────────────────── -->
+<!--  내 보고서 목록 패널                   -->
+<!-- ──────────────────────────────────────── -->
+<div class="mylist-overlay" id="mylistOverlay">
+  <div class="mylist-backdrop" onclick="closeMyList()"></div>
+  <div class="mylist-panel">
+    <div class="ml-header">
+      <div class="ml-header-top">
+        <div class="ml-label">내 저장 보고서</div>
+        <button class="ml-close" onclick="closeMyList()">✕</button>
+      </div>
+      <div class="ml-title" id="mlTitle">홍길동의 보고서</div>
+      <div class="ml-subtitle" id="mlSubtitle">저장된 보고서를 선택해서 불러오세요</div>
+    </div>
+    <div class="ml-body" id="mlBody"></div>
+    <button class="ml-new-btn" onclick="newReport()">＋ 새 보고서 작성</button>
+  </div>
+</div>
+
+<!-- ──────────────────────────────────────── -->
+<!--  PDF 불러오기 모달                     -->
+<!-- ──────────────────────────────────────── -->
+<div class="pdf-backdrop" id="pdfBackdrop">
+  <div class="pdf-modal">
+    <div class="pdf-title">📥 PDF 불러오기</div>
+    <div class="pdf-sub">
+      이전에 저장한 QUVIA 보고서 PDF를 업로드하면<br>
+      텍스트를 인식해서 편집 가능한 상태로 불러와요.
+    </div>
+    <div class="pdf-drop" id="pdfDrop" onclick="document.getElementById('pdfFileInput').click()">
+      <div style="font-size:32px;opacity:0.35">📄</div>
+      <div>PDF 파일을 클릭해서 선택</div>
+      <div style="font-size:11px;opacity:0.6">QUVIA 보고서 PDF만 지원</div>
+      <input type="file" id="pdfFileInput" accept=".pdf" style="display:none" onchange="handlePdfUpload(event)">
+    </div>
+    <div class="pdf-progress" id="pdfProgress">📖 PDF 텍스트 분석 중...</div>
+    <div class="pdf-actions">
+      <button class="pdf-cancel" onclick="closePdfModal()">취소</button>
+      <button class="pdf-confirm" id="pdfConfirm" onclick="applyPdfData()">이 내용으로 불러오기</button>
+    </div>
   </div>
 </div>
 
@@ -1277,22 +1525,442 @@ body {
 </div>
 
 <script>
+/* ════════════════════════════════════════════
+   Supabase 설정
+════════════════════════════════════════════ */
+const SUPA_URL = 'https://oeoxxmfgfiegfggyhohm.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lb3h4bWZnZmllZ2ZnZ3lob2htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDYzMjMsImV4cCI6MjA5MDEyMjMyM30.zeWdhASTQ1-170zC60ppqSeLB8XQkAea6Eg7nEUZhsg';
+const { createClient } = supabase;
+const db = createClient(SUPA_URL, SUPA_KEY);
+
+/* ════════════════════════════════════════════
+   현재 세션
+════════════════════════════════════════════ */
+let currentUser = null;   // { grade, cls, name, uid }
+let currentReportId = null;
+let autoSaveTimer = null;
+
+/* ════════════════════════════════════════════
+   로그인 / 로그아웃
+════════════════════════════════════════════ */
+function hashStr(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = Math.imul(31, h) + s.charCodeAt(i) | 0;
+  return Math.abs(h).toString(36);
+}
+
+async function doLogin() {
+  const grade = document.getElementById('lgGrade').value.trim();
+  const cls   = document.getElementById('lgClass').value.trim();
+  const name  = document.getElementById('lgName').value.trim();
+  const pw    = document.getElementById('lgPw').value.trim();
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  if (!grade || !cls || !name || !pw) {
+    errEl.textContent = '모든 항목을 입력해주세요.';
+    errEl.style.display = 'block'; return;
+  }
+  if (pw.length < 4) {
+    errEl.textContent = '비밀번호는 4자리 이상이어야 해요.';
+    errEl.style.display = 'block'; return;
+  }
+
+  const uid = hashStr(grade + cls + name + pw);
+
+  try {
+    // uid로 기존 유저 확인
+    const { data: rows } = await db
+      .from('report_users')
+      .select('uid,name,grade,cls')
+      .eq('uid', uid).limit(1);
+
+    if (!rows || rows.length === 0) {
+      // 신규 생성
+      await db.from('report_users').insert({ uid, grade, cls, name, created_at: new Date().toISOString() });
+    }
+
+    currentUser = { grade, cls, name, uid };
+    localStorage.setItem('quvia_session', JSON.stringify(currentUser));
+    document.getElementById('loginBackdrop').style.display = 'none';
+    onLoginSuccess();
+  } catch(e) {
+    errEl.textContent = '서버 연결에 실패했어요. 잠시 후 다시 시도해주세요.';
+    errEl.style.display = 'block';
+  }
+}
+
+function onLoginSuccess() {
+  const u = currentUser;
+  document.getElementById('userBadge').style.display  = 'flex';
+  document.getElementById('userAvatar').textContent   = u.name[0];
+  document.getElementById('userBadgeName').textContent = `${u.grade} ${u.cls} ${u.name}`;
+  document.getElementById('btnSaveCloud').style.display  = 'flex';
+  document.getElementById('btnMyReports').style.display  = 'flex';
+  document.getElementById('mlTitle').textContent      = `${u.name}의 보고서`;
+  showSaveStatus('saved', '클라우드 준비됨');
+  startAutoSave();
+}
+
+function logout(e) {
+  if (e) { e.stopPropagation(); }
+  if (!confirm('로그아웃할까요?')) return;
+  currentUser = null; currentReportId = null;
+  localStorage.removeItem('quvia_session');
+  document.getElementById('userBadge').style.display     = 'none';
+  document.getElementById('btnSaveCloud').style.display  = 'none';
+  document.getElementById('btnMyReports').style.display  = 'none';
+  stopAutoSave();
+  document.getElementById('loginBackdrop').style.display = 'flex';
+}
+
+/* ════════════════════════════════════════════
+   저장 인디케이터
+════════════════════════════════════════════ */
+let saveHideTimer = null;
+function showSaveStatus(state, text) {
+  const el = document.getElementById('saveIndicator');
+  const dot = el.querySelector('.save-dot');
+  el.className = 'save-indicator show ' + state;
+  document.getElementById('saveText').textContent = text;
+  clearTimeout(saveHideTimer);
+  if (state === 'saved') saveHideTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+/* ════════════════════════════════════════════
+   폼 데이터 수집
+════════════════════════════════════════════ */
+function collectFormData() {
+  const get  = id => (document.getElementById(id)||{}).value || '';
+  const qget = sel => { const el = document.querySelector(sel); return el ? el.value : ''; };
+
+  // 선택된 태그
+  const tags = [...document.querySelectorAll('.tag.selected')].map(t => t.textContent.trim());
+  // 선택된 그래프 타입
+  const graphTypes = [...document.querySelectorAll('.graph-type.selected')].map(t => t.textContent.trim());
+  // 가설 검증
+  const verdict = document.querySelector('.verdict-btn.selected')?.textContent.trim() || '';
+  // 별점
+  const starCount = [...document.querySelectorAll('.star')].filter(s => s.classList.contains('filled')).length;
+  // 그래프 이미지
+  const img = document.querySelector('#dropZone img');
+  const graphImg = img ? img.src : '';
+
+  return {
+    meta_name:    document.querySelector('.meta-input:nth-of-type(1)')?.value || '',
+    meta_team:    document.querySelectorAll('.meta-input')[1]?.value || '',
+    meta_period:  document.querySelectorAll('.meta-input')[2]?.value || '',
+    meta_tool:    document.querySelectorAll('.meta-input')[3]?.value || '',
+    title:        document.querySelector('#grid .input-line, .field-block .input-line')?.value || '',
+    topic:        document.querySelectorAll('.input-line')[0]?.value || '',
+    motivation:   document.querySelectorAll('.input-box')[0]?.value || '',
+    question:     document.querySelectorAll('.input-line')[1]?.value || '',
+    hypothesis:   document.querySelectorAll('.input-box')[1]?.value || '',
+    data_tags:    tags,
+    data_other:   document.querySelectorAll('.input-line')[2]?.value || '',
+    data_vars:    document.querySelectorAll('.input-line')[3]?.value || '',
+    data_clean:   document.querySelectorAll('.input-box')[2]?.value || '',
+    graph_img:    graphImg,
+    graph_types:  graphTypes,
+    graph_reason: document.querySelectorAll('.input-line')[4]?.value || '',
+    interpretation: document.querySelectorAll('.input-box')[3]?.value || '',
+    verdict,
+    conclusion:   document.querySelectorAll('.input-line')[5]?.value || '',
+    suggestion:   document.querySelectorAll('.input-box')[4]?.value || '',
+    growth:       document.querySelectorAll('.input-box')[5]?.value || '',
+    limit:        document.querySelectorAll('.input-box')[6]?.value || '',
+    star:         starCount,
+    saved_at:     new Date().toISOString(),
+  };
+}
+
+/* ════════════════════════════════════════════
+   폼 데이터 복원
+════════════════════════════════════════════ */
+function restoreFormData(d) {
+  if (!d) return;
+  const inputs  = document.querySelectorAll('.input-line');
+  const textareas = document.querySelectorAll('.input-box');
+  const metas   = document.querySelectorAll('.meta-input');
+
+  if (metas[0]) metas[0].value = d.meta_name   || '';
+  if (metas[1]) metas[1].value = d.meta_team   || '';
+  if (metas[2]) metas[2].value = d.meta_period || '';
+  if (metas[3]) metas[3].value = d.meta_tool   || '';
+  if (inputs[0]) inputs[0].value = d.topic       || '';
+  if (textareas[0]) textareas[0].value = d.motivation  || '';
+  if (inputs[1]) inputs[1].value = d.question    || '';
+  if (textareas[1]) textareas[1].value = d.hypothesis  || '';
+  if (inputs[2]) inputs[2].value = d.data_other  || '';
+  if (inputs[3]) inputs[3].value = d.data_vars   || '';
+  if (textareas[2]) textareas[2].value = d.data_clean  || '';
+  if (inputs[4]) inputs[4].value = d.graph_reason|| '';
+  if (textareas[3]) textareas[3].value = d.interpretation || '';
+  if (inputs[5]) inputs[5].value = d.conclusion  || '';
+  if (textareas[4]) textareas[4].value = d.suggestion  || '';
+  if (textareas[5]) textareas[5].value = d.growth      || '';
+  if (textareas[6]) textareas[6].value = d.limit       || '';
+
+  // 태그 복원
+  if (d.data_tags) {
+    document.querySelectorAll('.tag').forEach(t => {
+      if (d.data_tags.includes(t.textContent.trim())) t.classList.add('selected');
+    });
+  }
+  // 그래프 타입 복원
+  if (d.graph_types) {
+    document.querySelectorAll('.graph-type').forEach(t => {
+      if (d.graph_types.includes(t.textContent.trim())) t.classList.add('selected');
+    });
+  }
+  // 가설 검증 복원
+  if (d.verdict) {
+    document.querySelectorAll('.verdict-btn').forEach(b => {
+      if (b.textContent.trim() === d.verdict) {
+        b.classList.add('selected');
+        selectVerdict(b);
+      }
+    });
+  }
+  // 별점 복원
+  if (d.star) setStar(d.star);
+  // 그래프 이미지 복원
+  if (d.graph_img && d.graph_img.startsWith('data:')) {
+    const zone = document.getElementById('dropZone');
+    zone.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = d.graph_img;
+    img.style.cssText = 'max-width:100%;max-height:280px;border-radius:6px;display:block;margin:12px auto';
+    zone.appendChild(img);
+    const btn = document.createElement('div');
+    btn.textContent = '다른 이미지로 교체';
+    btn.style.cssText = 'font-size:12px;color:#6C757D;margin-bottom:10px;cursor:pointer;text-decoration:underline';
+    btn.onclick = () => { document.getElementById('imgInput').value=''; document.getElementById('imgInput').click(); };
+    zone.appendChild(btn);
+    const inp = document.createElement('input');
+    inp.type='file'; inp.id='imgInput'; inp.accept='image/*'; inp.style.display='none';
+    inp.onchange = handleImage;
+    zone.appendChild(inp);
+  }
+}
+
+/* ════════════════════════════════════════════
+   클라우드 저장
+════════════════════════════════════════════ */
+async function saveToCloud(silent=false) {
+  if (!currentUser) { alert('먼저 로그인해주세요!'); return; }
+  showSaveStatus('saving', '저장 중...');
+  const formData = collectFormData();
+  const title = formData.topic || '제목 없음';
+
+  try {
+    if (currentReportId) {
+      await db.from('reports').update({ data: formData, title, updated_at: new Date().toISOString() })
+        .eq('id', currentReportId);
+    } else {
+      const { data: row } = await db.from('reports')
+        .insert({ uid: currentUser.uid, title, data: formData, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .select('id').single();
+      currentReportId = row.id;
+    }
+    showSaveStatus('saved', `${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})} 저장됨`);
+    if (!silent) showToastMsg('💾 클라우드에 저장했어요!');
+  } catch(e) {
+    showSaveStatus('error', '저장 실패');
+    if (!silent) alert('저장에 실패했어요. 인터넷 연결을 확인해주세요.');
+  }
+}
+
+/* ════════════════════════════════════════════
+   자동 저장 (3분마다)
+════════════════════════════════════════════ */
+function startAutoSave() {
+  stopAutoSave();
+  autoSaveTimer = setInterval(() => saveToCloud(true), 3 * 60 * 1000);
+}
+function stopAutoSave() {
+  if (autoSaveTimer) clearInterval(autoSaveTimer);
+}
+
+/* ════════════════════════════════════════════
+   내 보고서 목록
+════════════════════════════════════════════ */
+async function openMyList() {
+  if (!currentUser) return;
+  document.getElementById('mylistOverlay').classList.add('open');
+  const body = document.getElementById('mlBody');
+  body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--gray-500);font-size:13px">불러오는 중...</div>';
+
+  const { data: rows } = await db.from('reports')
+    .select('id,title,updated_at')
+    .eq('uid', currentUser.uid)
+    .order('updated_at', { ascending: false });
+
+  if (!rows || rows.length === 0) {
+    body.innerHTML = '<div class="ml-empty">아직 저장된 보고서가 없어요.<br>보고서를 작성하고 💾 저장 버튼을 눌러보세요!</div>';
+    return;
+  }
+
+  body.innerHTML = rows.map(r => {
+    const dt = new Date(r.updated_at).toLocaleString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `
+      <div class="ml-item" onclick="loadReport(${r.id})">
+        <button class="ml-item-del" onclick="deleteReport(event,${r.id})" title="삭제">✕</button>
+        <div class="ml-item-title">${r.title || '제목 없음'}</div>
+        <div class="ml-item-meta">마지막 저장: ${dt}</div>
+      </div>`;
+  }).join('');
+}
+function closeMyList() { document.getElementById('mylistOverlay').classList.remove('open'); }
+
+async function loadReport(id) {
+  const { data: row } = await db.from('reports').select('id,data').eq('id', id).single();
+  if (!row) { alert('보고서를 불러올 수 없어요.'); return; }
+  currentReportId = row.id;
+  newReport(false);
+  setTimeout(() => {
+    restoreFormData(row.data);
+    closeMyList();
+    showToastMsg('📂 보고서를 불러왔어요!');
+  }, 100);
+}
+
+async function deleteReport(e, id) {
+  e.stopPropagation();
+  if (!confirm('이 보고서를 삭제할까요? 복구할 수 없어요.')) return;
+  await db.from('reports').delete().eq('id', id);
+  if (currentReportId === id) { currentReportId = null; newReport(false); }
+  openMyList();
+}
+
+function newReport(clearForm=true) {
+  if (clearForm) {
+    if (currentReportId && !confirm('현재 작성 중인 보고서가 저장됩니다. 새 보고서를 시작할까요?')) return;
+    saveToCloud(true);
+    currentReportId = null;
+    document.querySelectorAll('.input-line').forEach(el => el.value = '');
+    document.querySelectorAll('.input-box').forEach(el => el.value = '');
+    document.querySelectorAll('.meta-input').forEach(el => el.value = '');
+    document.querySelectorAll('.tag.selected,.graph-type.selected,.verdict-btn.selected')
+      .forEach(el => el.classList.remove('selected'));
+    setStar(0);
+    const zone = document.getElementById('dropZone');
+    zone.classList.remove('has-image');
+    zone.innerHTML = `<div style="font-size:30px;opacity:0.35">📊</div><div>클릭해서 그래프 이미지 업로드</div><div style="font-size:11px;opacity:0.55">PNG, JPG, GIF 지원</div><input type="file" id="imgInput" accept="image/*" onchange="handleImage(event)" style="display:none">`;
+  }
+  closeMyList();
+}
+
+/* ════════════════════════════════════════════
+   PDF 불러오기 (텍스트 파싱)
+════════════════════════════════════════════ */
+let parsedPdfData = null;
+
+function openPdfModal()  { document.getElementById('pdfBackdrop').classList.add('open'); }
+function closePdfModal() {
+  document.getElementById('pdfBackdrop').classList.remove('open');
+  document.getElementById('pdfProgress').style.display = 'none';
+  document.getElementById('pdfConfirm').style.display  = 'none';
+  document.getElementById('pdfDrop').style.display     = 'flex';
+  parsedPdfData = null;
+}
+
+async function handlePdfUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('pdfDrop').style.display     = 'none';
+  document.getElementById('pdfProgress').style.display = 'block';
+  document.getElementById('pdfProgress').textContent   = '📖 PDF 텍스트 분석 중...';
+
+  try {
+    const text = await extractTextFromPdf(file);
+    parsedPdfData = parsePdfText(text);
+    document.getElementById('pdfProgress').textContent = `✅ 분석 완료 — ${Object.keys(parsedPdfData).filter(k=>parsedPdfData[k]).length}개 항목 인식됨`;
+    document.getElementById('pdfConfirm').style.display = 'block';
+  } catch(err) {
+    document.getElementById('pdfProgress').textContent = '❌ 분석 실패. QUVIA 보고서 PDF인지 확인해주세요.';
+  }
+}
+
+async function extractTextFromPdf(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        // PDF.js 없이 텍스트 추출: ArrayBuffer → UTF-8 문자열에서 스트림 텍스트 파싱
+        const arr   = new Uint8Array(ev.target.result);
+        const raw   = Array.from(arr).map(b => String.fromCharCode(b)).join('');
+        // PDF BT...ET 블록에서 텍스트 추출
+        const matches = raw.match(/\(([^)]{2,200})\)\s*Tj/g) || [];
+        const text  = matches.map(m => m.replace(/^\(|\)\s*Tj$/g,'').replace(/\\n/g,' ')).join('\n');
+        if (text.length < 30) throw new Error('텍스트 없음');
+        resolve(text);
+      } catch(e) { reject(e); }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function parsePdfText(text) {
+  // 각 섹션 키워드 기반으로 파싱
+  const between = (from, to) => {
+    const fi = text.indexOf(from);
+    const ti = to ? text.indexOf(to, fi) : text.length;
+    if (fi === -1) return '';
+    return text.slice(fi + from.length, ti === -1 ? undefined : ti).trim();
+  };
+  return {
+    topic:          between('탐구 주제', '탐구 동기'),
+    motivation:     between('탐구 동기', '해결하고 싶은 질문'),
+    question:       between('해결하고 싶은 질문', '나의 가설'),
+    hypothesis:     between('나의 가설', '데이터 출처'),
+    data_vars:      between('수집한 데이터 항목', '데이터 정제'),
+    data_clean:     between('데이터 정제 과정', '사용한 그래프'),
+    graph_reason:   between('그래프를 선택한 이유', '데이터 해석'),
+    interpretation: between('데이터 해석', '가설 검증 결과'),
+    conclusion:     between('한 줄 결론', '나의 제언'),
+    suggestion:     between('나의 제언', '성장한 점'),
+    growth:         between('성장한 점', '데이터의 한계'),
+    limit:          between('데이터의 한계', '자기 평가'),
+  };
+}
+
+function applyPdfData() {
+  if (!parsedPdfData) return;
+  restoreFormData(parsedPdfData);
+  closePdfModal();
+  showToastMsg('📥 PDF 내용을 불러왔어요! 내용을 확인하고 편집하세요.');
+}
+
+/* ════════════════════════════════════════════
+   토스트
+════════════════════════════════════════════ */
+function showToastMsg(msg) {
+  let t = document.getElementById('toastMsg');
+  if (!t) { t = document.createElement('div'); t.id='toastMsg'; t.style.cssText='position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:#1C3D6E;color:#fff;padding:10px 22px;border-radius:100px;font-size:13px;z-index:3000;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap'; document.body.appendChild(t); }
+  t.textContent = msg; t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+  setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(20px)'; }, 2500);
+}
+
+/* ════════════════════════════════════════════
+   기존 폼 기능
+════════════════════════════════════════════ */
 function toggleTag(el) { el.classList.toggle('selected'); }
 function selectGraph(el) { el.classList.toggle('selected'); }
 function selectVerdict(el) {
   document.querySelectorAll('.verdict-btn').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
 }
-
 function setStar(val) {
   const labels = ['','1점 – 많이 부족했어요','2점 – 조금 부족했어요','3점 – 보통이에요','4점 – 잘 했어요!','5점 – 최고예요! ⭐'];
-  document.getElementById('starLabel').textContent = labels[val];
+  const lbl = document.getElementById('starLabel');
+  if (lbl) lbl.textContent = val ? labels[val] : '별점을 선택해주세요';
   document.querySelectorAll('.star').forEach((s,i) => {
     s.textContent = i < val ? '★' : '☆';
     s.classList.toggle('filled', i < val);
   });
 }
-
 function handleImage(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -1313,14 +1981,96 @@ function handleImage(e) {
     inp.type='file'; inp.id='imgInput'; inp.accept='image/*'; inp.style.display='none';
     inp.onchange = handleImage;
     zone.appendChild(inp);
-    zone.classList.add('has-image');
   };
   reader.readAsDataURL(file);
 }
-
-function toggleExample() {
-  document.getElementById('exampleOverlay').classList.toggle('open');
+function toggleExample() { document.getElementById('exampleOverlay').classList.toggle('open'); }
+function savePDF() {
+  const msg = document.createElement('div');
+  msg.style.cssText = 'position:fixed;top:66px;right:20px;background:#1C3D6E;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2)';
+  msg.textContent = '인쇄 창에서 "PDF로 저장" 선택 📄';
+  document.body.appendChild(msg);
+  setTimeout(() => { msg.remove(); window.print(); }, 500);
 }
+function openMyList() {
+  if (!currentUser) return;
+  document.getElementById('mylistOverlay').classList.add('open');
+  // 비동기 목록 로딩 (위에 정의)
+  (async()=>{
+    const body = document.getElementById('mlBody');
+    body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--gray-500);font-size:13px">불러오는 중...</div>';
+    const { data: rows } = await db.from('reports').select('id,title,updated_at').eq('uid', currentUser.uid).order('updated_at', { ascending: false });
+    if (!rows || rows.length === 0) { body.innerHTML = '<div class="ml-empty">아직 저장된 보고서가 없어요.<br>보고서를 작성하고 💾 저장 버튼을 눌러보세요!</div>'; return; }
+    body.innerHTML = rows.map(r => { const dt = new Date(r.updated_at).toLocaleString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); return `<div class="ml-item" onclick="loadReport(${r.id})"><button class="ml-item-del" onclick="deleteReport(event,${r.id})" title="삭제">✕</button><div class="ml-item-title">${r.title||'제목 없음'}</div><div class="ml-item-meta">마지막 저장: ${dt}</div></div>`; }).join('');
+  })();
+}
+
+/* ════════════════════════════════════════════
+   주제 목록
+════════════════════════════════════════════ */
+const TOPIC_PW = 'quvia2026';
+let topicsUnlocked = false, topicsFilter = 'all', topicsSearch = '';
+const TP_KEY = 'quvia_topics_v1';
+const DEFAULT_TOPICS = [
+  {id:1,type:'공공데이터',title:'계절별 기온 변화 분석 (아이스크림 vs 핫음료)',question:'기온이 오르면 아이스크림 판매량이 오를까?',site:'기상자료개방포털 data.kma.go.kr',graph:'선 그래프 (복수 선 비교)'},
+  {id:2,type:'공공데이터',title:'월별 미세먼지 농도 vs 마스크 판매량',question:'봄에 정말 미세먼지가 가장 심할까?',site:'에어코리아 airkorea.or.kr / data.kma.go.kr',graph:'선 그래프 (2축 비교)'},
+  {id:3,type:'공공데이터',title:'월별 학교폭력 신고 건수 추이 분석',question:'어느 시기에 학교폭력이 많이 발생할까?',site:'국가통계포털 kosis.kr → 학교폭력 검색',graph:'선 그래프 / 막대그래프'},
+  {id:4,type:'공공데이터',title:'요일별 급식 영양소 분석 (칼로리·단백질·나트륨)',question:'어느 요일 급식이 가장 균형 잡혔을까?',site:'학교알리미 schoolinfo.go.kr',graph:'막대그래프 / 선 그래프'},
+  {id:5,type:'공공데이터',title:'학생 통학 거리 분포 분석',question:'걸어오는 학생이 더 많을까, 버스 타는 학생이 더 많을까?',site:'학교알리미 schoolinfo.go.kr → 통학 거리',graph:'막대그래프 / 원그래프'},
+  {id:6,type:'공공데이터',title:'경산시 버스 노선별 혼잡도 비교',question:'어떤 버스 노선이 가장 붐빌까?',site:'공공데이터포털 data.go.kr → 버스 노선',graph:'막대그래프 / 가로막대 barh()'},
+  {id:7,type:'공공데이터',title:'지역별 공원 개수 vs 주민 행복지수',question:'공원이 많은 지역이 더 행복할까?',site:'공공데이터포털 data.go.kr → 도시공원 현황',graph:'산점도 / 막대그래프'},
+  {id:8,type:'가공필요',title:'프로야구 구단별 성적 비교',question:'내 팀의 강점은 타격? 투구?',site:'KBO 공식 koreabaseball.com → 기록실',graph:'막대그래프 / 산점도'},
+  {id:9,type:'가공필요',title:'유튜브 카테고리별 10대 시청 비율',question:'10대는 유튜브에서 뭘 가장 볼까?',site:'방송통신위원회 kcc.go.kr → 방송매체 이용행태 조사',graph:'원그래프 / 막대그래프'},
+  {id:10,type:'가공필요',title:'SNS 플랫폼별 연령대 사용 시간 비교',question:'내가 많이 쓰는 SNS, 어른들도 같을까?',site:'과기정통부 msit.go.kr → 인터넷 이용 실태조사',graph:'막대그래프 / 선 그래프'},
+  {id:11,type:'가상',title:'취침 시간 vs 수학 성적 산점도 분석',question:'늦게 잘수록 성적이 낮아질까?',site:'직접 설문 조사 (우리 반 친구들)',graph:'산점도 scatter()'},
+  {id:12,type:'가상',title:'편의점 시간대별 손님 수 (평일 vs 주말)',question:'언제 편의점이 제일 붐빌까?',site:'직접 관찰 조사 (근처 편의점)',graph:'막대그래프 (2개 비교)'},
+  {id:13,type:'가상',title:'아이돌 그룹 월별 음원 스트리밍 비교',question:'내 최애 그룹은 몇 월이 전성기?',site:'멜론 차트 (수동 수집) chart.melon.com',graph:'선 그래프 (다중 선)'},
+  {id:14,type:'가상',title:'급식 메뉴별 잔반량 분석',question:'학생들이 가장 싫어하는 메뉴는?',site:'우리 학교 직접 조사 (급식실 협조)',graph:'막대그래프 / 가로막대 barh()'},
+  {id:15,type:'가상',title:'스마트폰 사용 시간 vs 시력 점수',question:'폰을 많이 볼수록 시력이 나빠질까?',site:'직접 설문 조사 (우리 반 친구들)',graph:'산점도 scatter()'},
+  {id:16,type:'가상',title:'반려동물 종류별 진료비 비교',question:'어떤 동물이 병원비가 가장 많이 들까?',site:'직접 조사 (주변 동물병원 문의)',graph:'막대그래프 (다중 항목)'},
+  {id:17,type:'가상',title:'도서관 대출 TOP 도서 장르별 분석',question:'우리 동네에서 제일 인기 있는 책은?',site:'경산시립도서관 직접 방문 조사',graph:'가로막대 barh() / 원그래프'},
+  {id:18,type:'가상',title:'카페 날씨별 메뉴 주문 수 비교',question:'비 오는 날 핫라떼가 진짜 더 팔릴까?',site:'직접 관찰/인터뷰 (카페 협조 요청)',graph:'막대그래프 (3개 날씨)'},
+  {id:19,type:'가상',title:'동아리 회원 수 4년 변화 추이',question:'어떤 동아리가 뜨고 있고 지고 있을까?',site:'우리 학교 직접 조사 (학생회)',graph:'선 그래프 (다중 선)'},
+  {id:20,type:'가상',title:'주간 운동 시간 vs 스트레스 지수',question:'운동하면 진짜 스트레스가 줄어들까?',site:'직접 설문 조사 (우리 반 친구들)',graph:'산점도 scatter()'},
+];
+function loadTopics() { try { const s=localStorage.getItem(TP_KEY); return s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT_TOPICS)); } catch(_){return JSON.parse(JSON.stringify(DEFAULT_TOPICS));} }
+function saveTopics(t) { localStorage.setItem(TP_KEY, JSON.stringify(t)); }
+function toggleTopics() { const ov=document.getElementById('topicsOverlay'); ov.classList.toggle('open'); if(ov.classList.contains('open')) renderTopics(); }
+function renderTopics() {
+  const topics=loadTopics(), body=document.getElementById('topicsBody');
+  const tm={'공공데이터':'공공데이터','가공필요':'가공필요','가상':'가상'};
+  const filtered=topics.filter(t=>{ const mf=topicsFilter==='all'||t.type===tm[topicsFilter]; const ms=!topicsSearch||t.title.includes(topicsSearch)||t.question.includes(topicsSearch)||t.site.includes(topicsSearch); return mf&&ms; });
+  if(!filtered.length){body.innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--gray-500);font-size:13px;">검색 결과가 없어요</div>';return;}
+  const bc={'공공데이터':'tp-badge-green','가공필요':'tp-badge-orange','가상':'tp-badge-red'};
+  const bl={'공공데이터':'✅ 공공데이터','가공필요':'⚠️ 가공필요','가상':'❌ 가상/조사'};
+  body.innerHTML=filtered.map((t,i)=>`<div class="tp-card">${topicsUnlocked?`<button class="tp-del-btn" onclick="deleteTopic(${t.id})" title="삭제">✕</button>`:''}<div class="tp-card-top"><span class="tp-num">${String(i+1).padStart(2,'0')}</span><span class="tp-card-title">${t.title}</span><span class="tp-badge ${bc[t.type]}">${bl[t.type]}</span></div><div class="tp-row"><span class="tp-row-label">🔍 핵심질문</span><span class="tp-row-val">${t.question}</span></div><div class="tp-row"><span class="tp-row-label">🌐 데이터</span><span class="tp-row-val">${t.site}</span></div><div class="tp-row"><span class="tp-row-label">📊 그래프</span><span class="tp-row-val">${t.graph}</span></div></div>`).join('');
+}
+function filterTopics(type,el){ topicsFilter=type; document.querySelectorAll('.tp-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); renderTopics(); }
+function searchTopics(val){ topicsSearch=val.trim(); renderTopics(); }
+function checkPw(){ const pw=document.getElementById('tpPwInput').value; if(pw===TOPIC_PW){topicsUnlocked=true;document.getElementById('tpLockBadge').style.display='none';document.getElementById('tpUnlockedBadge').style.display='flex';document.getElementById('tpPwInput').style.display='none';document.getElementById('tpPwBtn').style.display='none';document.getElementById('tpAddArea').classList.add('unlocked');renderTopics();}else{document.getElementById('tpPwInput').style.border='1.5px solid var(--red-text)';document.getElementById('tpPwInput').value='';document.getElementById('tpPwInput').placeholder='❌ 비밀번호가 틀렸어요';setTimeout(()=>{document.getElementById('tpPwInput').style.border='';document.getElementById('tpPwInput').placeholder='비밀번호 입력';},1500);} }
+function addTopic(){ const title=document.getElementById('tpAddTitle').value.trim(),question=document.getElementById('tpAddQuestion').value.trim(),site=document.getElementById('tpAddSite').value.trim(),graph=document.getElementById('tpAddGraph').value.trim(),type=document.getElementById('tpAddType').value; if(!title||!question){alert('주제 제목과 핵심 질문은 필수예요!');return;} const topics=loadTopics(); topics.push({id:Date.now(),type,title,question,site:site||'—',graph:graph||'—'}); saveTopics(topics); document.getElementById('tpAddTitle').value=document.getElementById('tpAddQuestion').value=document.getElementById('tpAddSite').value=document.getElementById('tpAddGraph').value=''; renderTopics(); }
+function deleteTopic(id){ if(!topicsUnlocked)return; if(!confirm('이 주제를 삭제할까요?'))return; saveTopics(loadTopics().filter(t=>t.id!==id)); renderTopics(); }
+
+/* ════════════════════════════════════════════
+   이벤트 & 초기화
+════════════════════════════════════════════ */
+document.getElementById('modalBackdrop').addEventListener('click', function(e){ if(e.target===this) closeModal?.(); });
+document.getElementById('moveBackdrop')?.addEventListener('click', function(e){ if(e.target===this) closeMoveModal?.(); });
+document.getElementById('pdfBackdrop').addEventListener('click', function(e){ if(e.target===this) closePdfModal(); });
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape'){ closePdfModal(); closeMyList(); }
+  if(e.key==='Enter' && document.getElementById('loginBackdrop').style.display!=='none') doLogin();
+});
+
+// 세션 복원
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('quvia_session');
+  if (saved) {
+    try { currentUser = JSON.parse(saved); onLoginSuccess(); document.getElementById('loginBackdrop').style.display='none'; }
+    catch(_) { /* 세션 파손 → 로그인 화면 유지 */ }
+  }
+});
+</script>
 
 /* ════════════════════════════════════════════
    주제 목록 패널
