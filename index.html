@@ -1071,18 +1071,24 @@ async function saveToCloud(silent=false) {
   const title = formData.topic || '제목 없음';
   try {
     if (currentReportId) {
-      await db.from('reports').update({ data: formData, title, updated_at: new Date().toISOString() }).eq('id', currentReportId);
+      const { error } = await db.from('reports')
+        .update({ data: formData, title, updated_at: new Date().toISOString() })
+        .eq('id', currentReportId);
+      if (error) throw error;
     } else {
-      const { data: row } = await db.from('reports')
-        .insert({ uid: currentUser.uid, title, data: formData, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      const { data: row, error } = await db.from('reports')
+        .insert({ uid: currentUser.uid, title, data: formData,
+          created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
         .select('id').single();
+      if (error) throw error;
       if (row) currentReportId = row.id;
     }
     showSaveStatus('saved', new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}) + ' 저장됨');
     if (!silent) showToastMsg('💾 클라우드에 저장했어요!');
   } catch(e) {
+    console.error('저장 오류:', e);
     showSaveStatus('error', '저장 실패');
-    if (!silent) alert('저장 실패. 인터넷 연결을 확인해주세요.');
+    alert('❌ 저장 실패!\n오류: ' + (e?.message || e?.code || JSON.stringify(e)));
   }
 }
 
